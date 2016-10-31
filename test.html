@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MultiSelect Example</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <select name="select" class="multiple-select" multiple style="height: 100px">
+        <optgroup label="Europa">
+            <option value="1">Deutschland</option>
+            <option value="2">Italien</option>
+        </optgroup>
+        <optgroup label="Asien">
+            <option value="3">China</option>
+            <option value="4" disabled>Thailand - nicht verfügbar</option>
+        </optgroup>
+        <!-- <option value="5">
+            asd
+        </option> -->
+    </select>
+    <!-- <select class="multiple-select" multiple="multiple"></select> -->
+    <!-- <div class="multiple-select"></div> -->
+    <br>
+    <script async>
+        multiSelect('.multiple-select', {
+            debugMode: true,
+            ofString: 'von',
+            saveString: 'SPEICHERN',
+            cancelString: 'ABBRECHEN',
+            preInit: (function() {}),
+            afterInit: (function() {})
+        });
+    </script>
+</body>
+</html>

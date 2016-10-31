@@ -1,0 +1,64 @@
+.multiselect-container {
+    color: #495057;
+    font-family: 'helvetica neue', helvetica;
+    letter-spacing: .5px;
+    font-weight: 200;
+    min-width: 350px;
+    width: 350px;
+    box-shadow: 0 1px 3px 1px rgba(0,0,0,.2);
+}
+
+.multiselect-container > hr {
+    height: 1px;
+    border: 0;
+    background-color: #ddd;
+}
+
+.multiselect-container > .multiselect-row {
+    padding: 10px;
+    padding-top: 0;
+}
+
+.multiselect-container > .multiselect-row:first-child {
+    padding-top: 10px;
+}
+
+.multiselect-container > .multiselect-row.multiselect-row-bottom {
+    padding: 15px 10px; border-top: 1px #ddd solid;
+}
+
+.multiselect-container > .multiselect-row.multiselect-row-bottom > .multiselect-button {
+    font-weight:500;
+    float: right;
+    margin-left: 10px;
+    font-size: 0.8em;
+    padding-top: 0.2em;
+    color: #228ae6;
+    cursor: pointer;
+}
+
+.multiselect-container > .multiselect-row.multiselect-row-bottom > .multiselect-button.multiselect-save {
+    padding-top: 0;
+    margin-top: -5px;
+    background-color: #228ae6;
+    color: #fff;
+    padding: 0.6em;
+    border-bottom: #0058A6 2px solid;
+}
+
+.multiselect-container > .multiselect-row.multiselect-row-bottom > .multiselect-button.multiselect-save:active {
+     background-color: #0058A6;
+}
+
+.multiselect-container > .multiselect-row input[type="checkbox"] {
+    font-size: 1em;
+}
+
+.multiselect-container > .multiselect-optgroup {
+    font-weight: bold;
+}
+
+.multiselect-container > .multiselect-option-in-optgroup {
+    padding-left: 30px;
+    padding-top:0;
+}
