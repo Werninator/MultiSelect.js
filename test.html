@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style.css">
 
     <script src="classes/Option.js"></script>
+
     <script src="multiselect.js"></script>
     <script>
         multiSelect('.multiple-select', {
@@ -17,6 +18,7 @@
             afterInit: (function() {})
         });
     </script>
+
 </head>
 <body>
     <select name="select" class="multiple-select" multiple style="height: 100px">
@@ -35,5 +37,43 @@
     <!-- <select class="multiple-select" multiple="multiple"></select> -->
     <!-- <div class="multiple-select"></div> -->
     <br>
+
+    <div class="multiselect-container">
+        <div class="multiselect-row multiselect-optgroup">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> Europa
+            </label>
+        </div>
+        <div class="multiselect-row multiselect-option-in-optgroup">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> Deutschland
+            </label>
+        </div>
+        <div class="multiselect-row multiselect-option-in-optgroup">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> Italien
+            </label>
+        </div>
+        <div class="multiselect-row multiselect-optgroup">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> Asien
+            </label>
+        </div>
+        <div class="multiselect-row multiselect-option-in-optgroup">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> China
+            </label>
+        </div>
+        <div class="multiselect-row multiselect-option-in-optgroup">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> Thailand - nicht verfügbar
+            </label>
+        </div>
+        <div class="multiselect-row multiselect-row-bottom">
+            <span class="multiselect-counter">COUNTER_TEXT</span>
+            <span class="multiselect-button multiselect-save">SPEICHERN</span>
+            <span class="multiselect-button multiselect-cancel">ABBRECHEN</span>
+        </div>
+    </div>
 </body>
 </html>
