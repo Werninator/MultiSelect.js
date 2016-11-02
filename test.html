@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <title>MultiSelect Example</title>
     <link rel="stylesheet" href="style.css">
+
+    <script src="classes/Option.js"></script>
+    <script src="multiselect.js"></script>
+    <script>
+        multiSelect('.multiple-select', {
+            debugMode: true,
+            ofString: 'von',
+            saveString: 'SPEICHERN',
+            cancelString: 'ABBRECHEN',
+            preInit: (function() {}),
+            afterInit: (function() {})
+        });
+    </script>
 </head>
 <body>
     <select name="select" class="multiple-select" multiple style="height: 100px">
@@ -22,15 +35,5 @@
     <!-- <select class="multiple-select" multiple="multiple"></select> -->
     <!-- <div class="multiple-select"></div> -->
     <br>
-    <script async>
-        multiSelect('.multiple-select', {
-            debugMode: true,
-            ofString: 'von',
-            saveString: 'SPEICHERN',
-            cancelString: 'ABBRECHEN',
-            preInit: (function() {}),
-            afterInit: (function() {})
-        });
-    </script>
 </body>
 </html>
