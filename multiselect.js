@@ -30,7 +30,7 @@ var multiSelect = (function(selector, options) {
                 settings[property] = options[property];
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // NÜTZLCIHE FUNKTIONEN ----------------------------------------------------------------------------------------- //
+    // NÜTZLICHE FUNKTIONEN ----------------------------------------------------------------------------------------- //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Eigener Exception-Type
@@ -97,7 +97,7 @@ var multiSelect = (function(selector, options) {
         if (typeof what === 'undefined')
             throw new MultiSelectException('set: param 0: no defined value to set');
 
-        this[what].value = value;
+        return (this[what].value = value);
     };
 
     var add = function(what, value) {
@@ -306,9 +306,8 @@ var multiSelect = (function(selector, options) {
 
     var multiSelect = new MultiSelect(settings);
 
+    // Warten bis der Inhalt der Seite geladen ist
     ready(function() {
         multiSelect.init(selector);
     });
-
-    return multiSelect;
 });
