@@ -234,8 +234,10 @@ var multiSelect = (function(selector, options) {
 
                 if (option.get('isOptionGroup'))
                     currentOptionGroup = option;
-                else
+                else if (currentOptionGroup !== null)
                     currentOptionGroup.add('options', option);
+
+                that.add('options', option);
             });
         };
 
