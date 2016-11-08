@@ -44,8 +44,14 @@ var multiSelect = (function(selector, options) {
         return Object.prototype.toString.call(value).replace('[object ', '').replace(']', '');
     }
 
-    function checkType(value, type) {
-        return getType(value) === type;
+    function checkType(value, types) {
+        types = types.split('|');
+
+        for (var i in types)
+            if (getType(value) === types[i])
+                return true;
+
+        return false;
     }
 
     // Wartet bis der Inhalt der Seite geladen ist bevor der Code ausgeführt wird
@@ -84,10 +90,6 @@ var multiSelect = (function(selector, options) {
     var set = function(what, value) {
         if (typeof this[what] === 'undefined')
             throw new MultiSelectException('get: param 0: no defined value to set');
-
-        var inType = true;
-
-        for (var i in this[what].type)
 
         if (!checkType(value, this[what].type))
             throw new MultiSelectException('set: param 1 not typeof ' + this[what].type + ' (is ' + getType(value) + ')');
@@ -129,7 +131,7 @@ var multiSelect = (function(selector, options) {
                 disabled: { value: false, type: 'Boolean' },
                 isOptionGroup: { value: false, type: 'Boolean' },
                 options: { value: [], type: 'Object', className: 'Option' },
-                domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptGroupElement' },
+                domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptGroupElement|HTMLOptionElement' },
             };
 
             // Dynamic Values
