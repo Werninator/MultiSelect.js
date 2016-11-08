@@ -144,6 +144,22 @@ var multiSelect = (function(selector, options) {
                 this.set('domElement', element);
         };
 
+        msOption.prototype.inheritFromElement = function() {
+            var element = this.get('domElement');
+
+            if (element === null)
+                return;
+
+            this.set('label', this.get('isOptionGroup')
+                ? element.getAttribute('label')
+                : element.textContent);
+
+            this.set('disabled', element.disabled)
+
+            if (!this.get('isOptionGroup'))
+                this.set('checked', element.selected);
+        };
+
         return msOption;
     })();
 
@@ -232,10 +248,14 @@ var multiSelect = (function(selector, options) {
 
                 var option = new msOption(el);
 
+                option.set('isOptionGroup', el.tagName === 'OPTGROUP');
+
                 if (option.get('isOptionGroup'))
                     currentOptionGroup = option;
                 else if (currentOptionGroup !== null)
                     currentOptionGroup.add('options', option);
+
+                option.inheritFromElement();
 
                 that.add('options', option);
             });
