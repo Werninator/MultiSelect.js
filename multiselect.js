@@ -54,6 +54,24 @@ var multiSelect = (function(selector, options) {
         return false;
     }
 
+    function uniqid() {
+        return Math.floor(Math.random() * 1000000) + (new Date().getTime()).toString(16);
+    }
+
+    // Erstellt ein HTML-Element
+    function createElement(leftTag, content, rightTag) {
+        var element = document.createElement('div');
+
+        var tmp = '<' + leftTag + '>';
+
+        if (typeof rightTag !== 'undefined')
+            tmp += content + '</' + rightTag + '>';
+
+        element.innerHTML = tmp;
+
+        return element;
+    }
+
     // Wartet bis der Inhalt der Seite geladen ist bevor der Code ausgeführt wird
     function ready(fn) {
         if (document.readyState != 'loading') {
@@ -67,53 +85,53 @@ var multiSelect = (function(selector, options) {
     // DYNAMISCHE FUNKTIONEN (GETTER, SETTER, ADDER) ---------------------------------------------------------------- //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    var get = function(what) {
-        if (typeof this[what] === 'undefined')
+    var get = function(that, what) {
+        if (typeof that[what] === 'undefined')
             throw new MultiSelectException('get: param 0: no defined value to get');
 
         switch (true) {
             // Objekt
-            case this[what].type == 'Object' && !checkType(this[what].value, 'Array'):
+            case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
                 var retVal = {};
 
-                for (var property in this[what].value)
-                    if (this[what].value.hasOwnProperty(property))
-                        retVal[property] = this[what].value[property];
+                for (var property in that[what].value)
+                    if (that[what].value.hasOwnProperty(property))
+                        retVal[property] = that[what].value[property];
 
                 return retVal;
-            case this[what].type == 'Object' && checkType(this[what].value, 'Array'):
-            case 'Array': return this[what].value.slice();
-            default:      return this[what].value;
+            case that[what].type == 'Object' && checkType(that[what].value, 'Array'):
+            case 'Array': return that[what].value.slice();
+            default:      return that[what].value;
         }
     }
 
-    var set = function(what, value) {
-        if (typeof this[what] === 'undefined')
-            throw new MultiSelectException('get: param 0: no defined value to set');
+    var set = function(that, what, value) {
+        if (typeof that[what] === 'undefined')
+            throw new MultiSelectException('set: param 0: "' + what + '" is not defined');
 
-        if (!checkType(value, this[what].type))
-            throw new MultiSelectException('set: param 1 not typeof ' + this[what].type + ' (is ' + getType(value) + ')');
+        if (!checkType(value, that[what].type))
+            throw new MultiSelectException('set: param 1 not typeof ' + that[what].type + ' (is ' + getType(value) + ')');
 
         if (typeof what === 'undefined')
             throw new MultiSelectException('set: param 0: no defined value to set');
 
-        return (this[what].value = value);
+        return (that[what].value = value);
     };
 
-    var add = function(what, value) {
-        if (typeof this[what] === 'undefined')
+    var add = function(that, what, value) {
+        if (typeof that[what] === 'undefined')
             throw new MultiSelectException('add: param 0: no defined value to add something');
 
-        if (!checkType(this[what].value, 'Array'))
+        if (!checkType(that[what].value, 'Array'))
             throw new MultiSelectException('add: can\'t push value into a non-array');
 
         if (typeof value === 'undefined')
             throw new MultiSelectException('add: param 1: Can\'t push nothing into an array');
 
-        if (!checkType(value, this[what].type))
+        if (!checkType(value, that[what].type))
             throw new MultiSelectException('add: param 1: wrong type');
 
-        this[what].value.push(value);
+        that[what].value.push(value);
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,11 +139,8 @@ var multiSelect = (function(selector, options) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     var msOption = (function() {
-        function msOption(element) {
-            this.className = 'Option';
-
-            // Private Variables
-            var _private = {
+        var _private = function() { 
+            return {
                 checked: { value: false, type: 'Boolean' },
                 label: { value: '', type: 'String' },
                 disabled: { value: false, type: 'Boolean' },
@@ -133,16 +148,24 @@ var multiSelect = (function(selector, options) {
                 options: { value: [], type: 'Object', className: 'Option' },
                 domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptGroupElement|HTMLOptionElement' },
             };
+        };
 
-            // Dynamic Values
-            this.set = set.bind(_private);
-            this.add = add.bind(_private);
-            this.get = get.bind(_private);
+        var _privateVals = [];
 
-            // construct param
+        function msOption(element) {
+            this.className = 'Option';
+            this.instanceId = uniqid();
+
+            _privateVals[this.instanceId] = _private();
+
             if (typeof element !== 'undefined')
                 this.set('domElement', element);
         };
+
+        // Dynamic get/set/add
+        msOption.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
+        msOption.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
+        msOption.prototype.add = function(what, value) { return add(_privateVals[this.instanceId], what, value) };
 
         msOption.prototype.inheritFromElement = function() {
             var element = this.get('domElement');
@@ -164,41 +187,48 @@ var multiSelect = (function(selector, options) {
     })();
 
     var Dropdown = (function() {
-        function Dropdown(element) {
-            this.className = 'Dropdown';
-
-            // Private Variables
-            var _private = {
+        var _private = function() {
+            return{
                 domElement: { value: null, type: 'HTMLBodyElement' },
-            };
+            }
+        };
 
-            // Dynamic Values
-            this.set = set.bind(_private);
-            this.get = get.bind(_private);
+        var _privateVals = [];
 
-            // construct param
-            if (typeof element !== 'undefined')
-                this.set('domElement', element);
+        function Dropdown() {
+            this.className = 'Dropdown';
+            this.instanceId = uniqid();
+
+            _privateVals[this.instanceId] = _private();
+        };
+
+        // Dynamic get/set
+        Dropdown.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
+        Dropdown.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
+
+        Dropdown.prototype.applyOptions = function() {
+
         };
 
         return Dropdown;
     })();
 
     var ToggleButton = (function() {
-        function ToggleButton(element, label) {
-            this.className = 'ToggleButton';
-
-            // Private Variables
-            var _private = {
-                domElement: { value: null, type: 'HTMLBodyElement' },
+        var _private = function() {
+            return {
+                domElement: { value: null, type: 'HTMLSelectElement' },
                 label: { value: null, type: 'String' },
             };
+        };
 
-            // Dynamic Values
-            this.set = set.bind(_private);
-            this.get = get.bind(_private);
+        var _privateVals = [];
 
-            // construct params
+        function ToggleButton(element, label) {
+            this.className = 'ToggleButton';
+            this.instanceId = uniqid();
+
+            _privateVals[this.instanceId] = _private();
+
             if (typeof element !== 'undefined')
                 this.set('domElement', element);
 
@@ -206,33 +236,43 @@ var multiSelect = (function(selector, options) {
                 this.set('label', label);
         };
 
+        // Dynamic get/set/add
+        ToggleButton.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
+        ToggleButton.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
+        ToggleButton.prototype.add = function(what, value) { return add(_privateVals[this.instanceId], what, value) };
+
         return ToggleButton;
     })();
 
     var UIController = (function() {
-        function UIController(element) {
-            this.className = 'UIController';
-
-            // Private Variables
-            var _private = {
+        var _private = function() {
+            return {
                 domElement: { value: null, type: 'HTMLSelectElement' },
                 options: { value: [], type: 'Object', className: 'Option' },
                 dropdown: { value: null, type: 'Object', className: 'Dropdown' },
-                togglebutton: { value: null, type: 'Object', className: 'ToggleButton' },
+                toggleButton: { value: null, type: 'Object', className: 'ToggleButton' },
                 dropdownIsOpen: { value: false, type: 'Boolean' }
             };
+        };
 
-            // Dynamic Values
-            this.set = set.bind(_private);
-            this.add = add.bind(_private);
-            this.get = get.bind(_private);
+        var _privateVals = [];
 
-            // construct param
+        function UIController(element) {
+            this.className = 'UIController';
+            this.instanceId = uniqid();
+
+            _privateVals[this.instanceId] = _private();
+
             if (typeof element !== 'undefined')
                 this.set('domElement', element);
 
             this.init();
         };
+
+        // Dynamic get/set/add
+        UIController.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
+        UIController.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
+        UIController.prototype.add = function(what, value) { return add(_privateVals[this.instanceId], what, value) };
 
         UIController.prototype.init = function() {
             var that = this;
@@ -259,29 +299,40 @@ var multiSelect = (function(selector, options) {
 
                 that.add('options', option);
             });
+
+            var toggleButton = new ToggleButton(select);
+            this.set('toggleButton', toggleButton);
+
+            var dropdown = new Dropdown();
         };
 
         return UIController;
     })();
 
     var MultiSelect = (function() {
-        function MultiSelect(settings) {
-            this.className = 'MultiSelect';
-
-            // Private Variables
-            var _private = {
+        var _private = function() {
+            return {
                 uiControllers: { value: [], type: 'Object', className: 'UIController' },
                 settings: { value: null, type: 'Object' },
             };
+        };
 
-            // Dynamic Values
-            this.set = set.bind(_private);
-            this.add = add.bind(_private);
-            this.get = get.bind(_private);
+        var _privateVals = [];
+
+        function MultiSelect(settings) {
+            this.className = 'MultiSelect';
+            this.instanceId = uniqid();
+
+            _privateVals[this.instanceId] = _private();
 
             if (typeof settings !== 'undefined')
                 this.set('settings', settings);
         };
+
+        // Dynamic get/set/add
+        MultiSelect.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
+        MultiSelect.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
+        MultiSelect.prototype.add = function(what, value) { return add(_privateVals[this.instanceId], what, value) };
 
         MultiSelect.prototype.init = function(selector) {
             var that = this;
