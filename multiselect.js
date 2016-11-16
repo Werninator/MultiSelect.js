@@ -41,9 +41,10 @@ var multiSelect = (function(selector, options) {
 
     // Holt sich den Typen aus Sicht der toString()-Methode der Objekte in JavaScript
     function getType(value) {
-        return Object.prototype.toString.call(value).replace('[object ', '').replace(']', '');
+        return Object.prototype.toString.call(value).replace(/^\[object (.+)\]$/, '$1');
     }
 
+    // Überprüft den Typen eines Wertes, kann über "|" aufgetrennt werden falls mehrere Werte abgefragt werden
     function checkType(value, types) {
         types = types.split('|');
 
@@ -54,31 +55,36 @@ var multiSelect = (function(selector, options) {
         return false;
     }
 
+    // Erstellt eine unique-id für die Instanzen
     function uniqid() {
         return Math.floor(Math.random() * 1000000) + (new Date().getTime()).toString(16);
     }
 
     // Erstellt ein HTML-Element
-    function createElement(leftTag, content, rightTag) {
+    function createElement(innerHTML, events) {
         var element = document.createElement('div');
+        element.innerHTML = innerHTML;
 
-        var tmp = '<' + leftTag + '>';
+        var child = element.children[0];
 
-        if (typeof rightTag !== 'undefined')
-            tmp += content + '</' + rightTag + '>';
+        if (typeof events !== undefined)
+            for (var on in events)
+                if (events.hasOwnProperty(on))
+                    child.addEventListener(on, event);
 
-        element.innerHTML = tmp;
+        return child;
+    }
 
-        return element;
+    // Triggert ein natives Event
+    function triggerEvent(element, eventName) {
+        var event = document.createEvent('HTMLEvents');
+        event.initEvent(eventName, true, false);
+        element.dispatchEvent(event);
     }
 
     // Wartet bis der Inhalt der Seite geladen ist bevor der Code ausgeführt wird
     function ready(fn) {
-        if (document.readyState != 'loading') {
-            fn();
-        } else {
-            document.addEventListener('DOMContentLoaded', fn);
-        }
+        document.readyState != 'loading' && fn() || document.addEventListener('DOMContentLoaded', fn);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,7 +145,7 @@ var multiSelect = (function(selector, options) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     var msOption = (function() {
-        var _private = function() { 
+        var _private = function() {
             return {
                 checked: { value: false, type: 'Boolean' },
                 label: { value: '', type: 'String' },
@@ -188,7 +194,7 @@ var multiSelect = (function(selector, options) {
 
     var Dropdown = (function() {
         var _private = function() {
-            return{
+            return {
                 domElement: { value: null, type: 'HTMLBodyElement' },
             }
         };
@@ -206,10 +212,6 @@ var multiSelect = (function(selector, options) {
         Dropdown.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
         Dropdown.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
 
-        Dropdown.prototype.applyOptions = function() {
-
-        };
-
         return Dropdown;
     })();
 
@@ -223,23 +225,24 @@ var multiSelect = (function(selector, options) {
 
         var _privateVals = [];
 
-        function ToggleButton(element, label) {
+        function ToggleButton() {
             this.className = 'ToggleButton';
             this.instanceId = uniqid();
 
             _privateVals[this.instanceId] = _private();
-
-            if (typeof element !== 'undefined')
-                this.set('domElement', element);
-
-            if (typeof label !== 'undefined')
-                this.set('label', label);
         };
 
         // Dynamic get/set/add
         ToggleButton.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
         ToggleButton.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
-        ToggleButton.prototype.add = function(what, value) { return add(_privateVals[this.instanceId], what, value) };
+
+        ToggleButton.prototype.getUi = function() {
+            var newElement = createElement('<button>TOGGLEBUTTON.LABEL</button>');
+
+            this.set('domElement', newElement);
+
+            return newElement;
+        };
 
         return ToggleButton;
     })();
@@ -304,6 +307,15 @@ var multiSelect = (function(selector, options) {
             this.set('toggleButton', toggleButton);
 
             var dropdown = new Dropdown();
+            this.set('dropdown', dropdown);
+
+            this.allocAndReplace(select);
+        };
+
+        UIController.prototype.allocAndReplace = function() {
+            var toggleButton = this.get('toggleButton');
+
+            console.log(toggleButton.getUi());
         };
 
         return UIController;
