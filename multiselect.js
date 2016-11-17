@@ -97,14 +97,16 @@ var multiSelect = (function(selector, options) {
 
         switch (true) {
             // Objekt
-            // case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
-            //     var retVal = {};
+            case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
+                var retVal = that[what].hasOwnProperty('className')
+                    ? new that[what].value.constructor
+                    : {};
 
-            //     for (var property in that[what].value)
-            //         if (that[what].value.hasOwnProperty(property))
-            //             retVal[property] = that[what].value[property];
+                for (var property in that[what].value)
+                    if (that[what].value.hasOwnProperty(property))
+                        retVal[property] = that[what].value[property];
 
-            //     return retVal;
+                return retVal;
             case that[what].type == 'Object' && checkType(that[what].value, 'Array'):
             case 'Array': return that[what].value.slice();
             default:      return that[what].value;
