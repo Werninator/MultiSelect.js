@@ -97,14 +97,14 @@ var multiSelect = (function(selector, options) {
 
         switch (true) {
             // Objekt
-            case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
-                var retVal = {};
+            // case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
+            //     var retVal = {};
 
-                for (var property in that[what].value)
-                    if (that[what].value.hasOwnProperty(property))
-                        retVal[property] = that[what].value[property];
+            //     for (var property in that[what].value)
+            //         if (that[what].value.hasOwnProperty(property))
+            //             retVal[property] = that[what].value[property];
 
-                return retVal;
+            //     return retVal;
             case that[what].type == 'Object' && checkType(that[what].value, 'Array'):
             case 'Array': return that[what].value.slice();
             default:      return that[what].value;
@@ -218,7 +218,7 @@ var multiSelect = (function(selector, options) {
     var ToggleButton = (function() {
         var _private = function() {
             return {
-                domElement: { value: null, type: 'HTMLSelectElement' },
+                domElement: { value: null, type: 'HTMLButtonElement' },
                 label: { value: null, type: 'String' },
             };
         };
@@ -237,11 +237,7 @@ var multiSelect = (function(selector, options) {
         ToggleButton.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
 
         ToggleButton.prototype.getUi = function() {
-            var newElement = createElement('<button>TOGGLEBUTTON.LABEL</button>');
-
-            this.set('domElement', newElement);
-
-            return newElement;
+            return this.set('domElement', createElement('<button>TOGGLEBUTTON.LABEL</button>'));
         };
 
         return ToggleButton;
@@ -312,10 +308,10 @@ var multiSelect = (function(selector, options) {
             this.allocAndReplace(select);
         };
 
-        UIController.prototype.allocAndReplace = function() {
+        UIController.prototype.allocAndReplace = function(select) {
             var toggleButton = this.get('toggleButton');
 
-            console.log(toggleButton.getUi());
+            select.insertAdjacentHTML('afterend', toggleButton.getUi().outerHTML);
         };
 
         return UIController;
