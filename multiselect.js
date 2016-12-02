@@ -18,7 +18,7 @@ var multiSelect = (function(selector, options) {
 
         // Hooks
         preInit: null,
-        afterInit: null,
+        postInit: null,
         onChange: null,
         onSave: null,
     };
@@ -154,7 +154,8 @@ var multiSelect = (function(selector, options) {
                 disabled: { value: false, type: 'Boolean' },
                 isOptionGroup: { value: false, type: 'Boolean' },
                 options: { value: [], type: 'Object', className: 'Option' },
-                domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptGroupElement|HTMLOptionElement' },
+                parentOption: { value: null, type: 'Object', className: 'Option' },
+                domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptionElement' },
             };
         };
 
@@ -191,13 +192,28 @@ var multiSelect = (function(selector, options) {
                 this.set('checked', element.selected);
         };
 
+        msOption.prototype.getUi = function() {
+            var ext = '-option';
+
+            if (this.get('isOptionGroup'))
+                ext = '-optgroup';
+            else if (this.get('parentOption'))
+                ext += '-in-optgroup';
+
+            return createElement('<div class="multiselect-row multiselect' + ext + '">\
+                <label>\
+                    <input type="checkbox" class="multiselect-checkbox" ' + (this.get('checked') ? 'checked' : '') + '> ' + this.get('label') + '\
+                </label>\
+            </div>')
+        };
+
         return msOption;
     })();
 
     var Dropdown = (function() {
         var _private = function() {
             return {
-                domElement: { value: null, type: 'HTMLBodyElement' },
+                domElement: { value: null, type: 'HTMLDivElement' },
             }
         };
 
@@ -213,6 +229,17 @@ var multiSelect = (function(selector, options) {
         // Dynamic get/set
         Dropdown.prototype.get = function(what) { return get(_privateVals[this.instanceId], what) };
         Dropdown.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
+
+        Dropdown.prototype.getUi = function() {
+            return createElement('<div class="multiselect-container">\
+                <div class="multiselect-row-container"></div>\
+                <div class="multiselect-row multiselect-row-bottom">\
+                    <span class="multiselect-counter"></span>\
+                    <span class="multiselect-button multiselect-save">SPEICHERN</span>\
+                    <span class="multiselect-button multiselect-cancel">ABBRECHEN</span>\
+                </div>\
+            </div>');
+        };
 
         return Dropdown;
     })();
@@ -239,7 +266,11 @@ var multiSelect = (function(selector, options) {
         ToggleButton.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
 
         ToggleButton.prototype.getUi = function() {
-            return this.set('domElement', createElement('<button>TOGGLEBUTTON.LABEL</button>'));
+            return this.set('domElement', createElement('<button></button>'));
+        };
+
+        ToggleButton.prototype.setLabel = function(text) {
+            this.get('domElement').innerHTML = text;
         };
 
         return ToggleButton;
@@ -293,8 +324,10 @@ var multiSelect = (function(selector, options) {
 
                 if (option.get('isOptionGroup'))
                     currentOptionGroup = option;
-                else if (currentOptionGroup !== null)
+                else if (currentOptionGroup !== null) {
                     currentOptionGroup.add('options', option);
+                    option.set('parentOption', currentOptionGroup);
+                }
 
                 option.inheritFromElement();
 
@@ -312,8 +345,95 @@ var multiSelect = (function(selector, options) {
 
         UIController.prototype.allocAndReplace = function(select) {
             var toggleButton = this.get('toggleButton');
-
             select.insertAdjacentHTML('afterend', toggleButton.getUi().outerHTML);
+
+            select.setAttribute('style', 'display: none;');
+
+            var toggleButtonDOM = select.nextElementSibling;
+            toggleButton.set('domElement', toggleButtonDOM);
+
+            toggleButtonDOM.classList = 'multiselect-button multiselect-save';
+
+            var dropdown = this.get('dropdown');
+            toggleButtonDOM.insertAdjacentHTML('afterend', dropdown.getUi().outerHTML);
+
+            var dropdownDOM = toggleButtonDOM.nextElementSibling;
+            dropdown.set('domElement', dropdownDOM);
+
+            dropdownDOM.setAttribute('style', 'left: ' + toggleButtonDOM.offsetLeft + 'px; top: ' + (toggleButtonDOM.offsetTop + toggleButtonDOM.offsetHeight + 8) + 'px;');
+
+            this.updateContent();
+            this.applyEvents();
+        };
+
+        UIController.prototype.updateContent = function() {
+            var dropdownDOM  = this.get('dropdown').get('domElement');
+            var rowContainer = dropdownDOM.querySelector('.multiselect-row-container');
+
+            var optList = this.getOptionList();
+
+            rowContainer.innerHTML = '';
+
+            for (var i in optList)
+                rowContainer.appendChild(optList[i]);
+
+            var toggleButton = this.get('toggleButton');
+            var rowCounter   = dropdownDOM.querySelector('.multiselect-counter');
+            var counterText  = this.getSelectedOptionCount() + ' von ' + this.getOptionCount();
+
+            toggleButton.setLabel(counterText + ' ausgewählt');
+            rowCounter.innerHTML = counterText;
+        };
+
+        UIController.prototype.getOptionList = function() {
+            var retVal  = [];
+
+            var options = this.get('options');
+
+            for (var i in options)
+                retVal.push(options[i].getUi());
+
+            return retVal;
+        };
+
+        UIController.prototype.getSelectedOptionCount = function() {
+            var count = 0;
+
+            var options = this.get('options');
+
+            for (var i in options)
+                if (options[i].get('checked') && !options[i].get('isOptionGroup'))
+                    count++;
+
+            return count;
+        };
+
+        UIController.prototype.getOptionCount = function() {
+            var count = 0;
+
+            var options = this.get('options');
+
+            for (var i in options)
+                if (!options[i].get('isOptionGroup'))
+                    count++;
+
+            return count;
+        };
+
+        UIController.prototype.applyEvents = function() {
+            document.addEventListener('click', function(event) {
+                var el = event.target;
+
+                if (el.tagName == 'INPUT' && el.type == 'checkbox')
+                    console.log('checkbox');
+
+                if (!!~el.className.indexOf('multiselect-button')) {
+                    if (!!~el.className.indexOf('multiselect-cancel'))
+                        console.log('cancel');
+                    else if (!!~el.className.indexOf('multiselect-save'))
+                        console.log('save');
+                }
+            });
         };
 
         return UIController;

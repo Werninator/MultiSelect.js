@@ -9,14 +9,7 @@
     <script src="multiselect.js"></script>
 
     <script>
-        multiSelect('.multiple-select', {
-            debugMode: true,
-            ofString: 'von',
-            saveString: 'SPEICHERN',
-            cancelString: 'ABBRECHEN',
-            preInit: (function() {}),
-            afterInit: (function() {})
-        });
+
     </script>
 </head>
 <body>
@@ -35,6 +28,11 @@
     <br>
 
     <div class="multiselect-container">
+        <div class="multiselect-row multiselect-option">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> test
+            </label>
+        </div>
         <div class="multiselect-row multiselect-optgroup">
             <label>
                 <input type="checkbox" class="multiselect-checkbox"> Europa
