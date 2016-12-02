@@ -155,7 +155,7 @@ var multiSelect = (function(selector, options) {
                 isOptionGroup: { value: false, type: 'Boolean' },
                 options: { value: [], type: 'Object', className: 'Option' },
                 parentOption: { value: null, type: 'Object', className: 'Option' },
-                domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptionElement' },
+                domElement: { value: null, type: 'HTMLOptGroupElement|HTMLOptionElement|HTMLDivElement' },
             };
         };
 
@@ -200,11 +200,11 @@ var multiSelect = (function(selector, options) {
             else if (this.get('parentOption'))
                 ext += '-in-optgroup';
 
-            return createElement('<div class="multiselect-row multiselect' + ext + '">\
+            return this.set('domElement', createElement('<div class="multiselect-row multiselect' + ext + '">\
                 <label>\
                     <input type="checkbox" class="multiselect-checkbox" ' + (this.get('checked') ? 'checked' : '') + '> ' + this.get('label') + '\
                 </label>\
-            </div>')
+            </div>'));
         };
 
         return msOption;
@@ -231,14 +231,14 @@ var multiSelect = (function(selector, options) {
         Dropdown.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
 
         Dropdown.prototype.getUi = function() {
-            return createElement('<div class="multiselect-container">\
+            return this.set('domElement', createElement('<div class="multiselect-container">\
                 <div class="multiselect-row-container"></div>\
                 <div class="multiselect-row multiselect-row-bottom">\
                     <span class="multiselect-counter"></span>\
                     <span class="multiselect-button multiselect-save">SPEICHERN</span>\
                     <span class="multiselect-button multiselect-cancel">ABBRECHEN</span>\
                 </div>\
-            </div>');
+            </div>'));
         };
 
         return Dropdown;
@@ -363,6 +363,7 @@ var multiSelect = (function(selector, options) {
             dropdownDOM.setAttribute('style', 'left: ' + toggleButtonDOM.offsetLeft + 'px; top: ' + (toggleButtonDOM.offsetTop + toggleButtonDOM.offsetHeight + 8) + 'px;');
 
             this.updateContent();
+            this.handleIndeterminate();
             this.applyEvents();
         };
 
@@ -385,13 +386,41 @@ var multiSelect = (function(selector, options) {
             rowCounter.innerHTML = counterText;
         };
 
+        UIController.prototype.handleIndeterminate = function() {
+            var controllerOptions = this.get('options');
+
+            for (var j in controllerOptions) {
+
+                if (!controllerOptions[j].get('isOptionGroup'))
+                    continue;
+
+                var options = controllerOptions[j].get('options');
+
+                var allSelected    = true;
+                var allNotSelected = true;
+
+                for (var i in options) {;
+                    if (options[i].get('checked'))
+                        allNotSelected = false;
+
+                    if (!options[i].get('checked'))
+                        allSelected = false;
+                }
+
+                if (!allSelected && !allNotSelected) {
+                    controllerOptions[j].get('domElement').querySelector('input[type=checkbox]').indeterminate = true;
+                }
+            }
+        }
+
         UIController.prototype.getOptionList = function() {
             var retVal  = [];
 
             var options = this.get('options');
 
-            for (var i in options)
+            for (var i in options) {
                 retVal.push(options[i].getUi());
+            }
 
             return retVal;
         };
@@ -421,19 +450,33 @@ var multiSelect = (function(selector, options) {
         };
 
         UIController.prototype.applyEvents = function() {
+            var that = this;
+
             document.addEventListener('click', function(event) {
                 var el = event.target;
 
                 if (el.tagName == 'INPUT' && el.type == 'checkbox')
-                    console.log('checkbox');
+                    that.handleCheckboxClick(el);
 
                 if (!!~el.className.indexOf('multiselect-button')) {
                     if (!!~el.className.indexOf('multiselect-cancel'))
-                        console.log('cancel');
+                        that.hideDropdown();
                     else if (!!~el.className.indexOf('multiselect-save'))
-                        console.log('save');
+                        that.saveChanges();
                 }
             });
+        };
+
+        UIController.prototype.handleCheckboxClick = function(el) {
+            console.log(el);
+        };
+
+        UIController.prototype.hideDropdown = function() {
+
+        };
+
+        UIController.prototype.saveChanges = function() {
+
         };
 
         return UIController;
