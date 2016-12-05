@@ -207,9 +207,43 @@ var multiSelect = (function(selector, options) {
 
             return this.set('domElement', createElement('<div class="multiselect-row multiselect' + ext + '">\
                 <label>\
-                    <input type="checkbox" class="multiselect-checkbox" ' + (this.get('disabled') ? 'disabled' : '') + ' ' + (this.get('checked') ? 'checked' : '') + '> ' + label + '\
+                    <input type="checkbox" class="multiselect-checkbox" data-inst="' + this.instanceId + '" ' + (this.get('disabled') ? 'disabled' : '') + ' ' + (this.get('checked') ? 'checked' : '') + '> ' + label + '\
                 </label>\
             </div>'));
+        };
+
+        msOption.prototype.check = function(checked) {
+            var i, options;
+
+            this.set('checked', checked);
+
+            if (this.get('isOptionGroup')) {
+                options = this.get('options');
+
+                for (i in options)
+                    if (!options[i].get('disabled'))
+                        options[i].check(checked);
+            } else {
+                var parent = this.get('parentOption');
+                options = parent.get('options');
+
+                var allSelected = true;
+                var allNotSelected = true;
+
+                for (i in options) {
+                    if (!options[i].get('checked'))
+                        allSelected = false;
+
+                    if (options[i].get('checked'))
+                        allNotSelected = false;
+                }
+
+                if (allSelected)
+                    parent.set('checked', true);
+
+                if (allNotSelected)
+                    parent.set('checked', false);
+            }
         };
 
         return msOption;
@@ -368,7 +402,6 @@ var multiSelect = (function(selector, options) {
             dropdownDOM.setAttribute('style', 'left: ' + toggleButtonDOM.offsetLeft + 'px; top: ' + (toggleButtonDOM.offsetTop + toggleButtonDOM.offsetHeight + 8) + 'px;');
 
             this.updateContent();
-            this.handleIndeterminate();
             this.applyEvents();
         };
 
@@ -389,6 +422,8 @@ var multiSelect = (function(selector, options) {
 
             toggleButton.setLabel(counterText + ' ausgewählt');
             rowCounter.innerHTML = counterText;
+
+            this.handleIndeterminate();
         };
 
         UIController.prototype.handleIndeterminate = function() {
@@ -471,7 +506,20 @@ var multiSelect = (function(selector, options) {
         };
 
         UIController.prototype.handleCheckboxClick = function(el) {
+            var instanceId = 'data-inst' in el.attributes && el.attributes['data-inst'].value || null;
 
+            // obligatorisch
+            if (!instanceId) {
+                this.updateContent();
+                return;
+            }
+
+            var opt = new msOption();
+            opt.instanceId = instanceId;
+
+            opt.check(el.checked);
+
+            this.updateContent();
         };
 
         UIController.prototype.hideDropdown = function() {
