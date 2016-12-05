@@ -234,7 +234,7 @@ var multiSelect = (function(selector, options) {
                 var allSelected = true;
 
                 for (i in options)
-                    if (!options[i].get('checked'))
+                    if (!options[i].get('checked') && !options[i].get('disabled'))
                         allSelected = false;
 
                 parent.set('checked', allSelected);
@@ -367,11 +367,15 @@ var multiSelect = (function(selector, options) {
                 if (option.get('isOptionGroup'))
                     currentOptionGroup = option;
                 else if (currentOptionGroup !== null) {
+
                     currentOptionGroup.add('options', option);
                     option.set('parentOption', currentOptionGroup);
                 }
 
                 option.inheritFromElement();
+
+                if (currentOptionGroup && currentOptionGroup.get('disabled'))
+                    option.set('disabled', true);
 
                 that.add('options', option);
             });
@@ -568,6 +572,17 @@ var multiSelect = (function(selector, options) {
             var i;
             var that = this;
 
+            document.addEventListener('keydown', function(event) {
+                if ((event.which || event.keyCode) !== 27) // Escape
+                    return
+
+                var uiControllers = that.get('uiControllers');
+
+                for (i in uiControllers)
+                    if (uiControllers[i].get('dropdownIsOpen'))
+                        uiControllers[i].hideDropdown();
+            });
+
             document.addEventListener('click', function(event) {
                 var uiControllers = that.get('uiControllers');
 
@@ -600,11 +615,8 @@ var multiSelect = (function(selector, options) {
                 if (!!~el.className.indexOf('multiselect-button')) {
                     if (!!~el.className.indexOf('multiselect-cancel'))
                         ctrl.hideDropdown();
-                    else if (!!~el.className.indexOf('multiselect-toggle')) {
-                        if (ctrl.get('dropdownIsOpen'))
-                            ctrl.hideDropdown();
-                        else
-                            ctrl.showDropdown();
+                    else if (!!~el.className.indexOf('multiselect-toggle')) { 
+                        ctrl[(ctrl.get('dropdownIsOpen') ? 'hide' : 'show') + 'Dropdown']();
                     } else if (!!~el.className.indexOf('multiselect-save'))
                         ctrl.saveChanges();
                 }
