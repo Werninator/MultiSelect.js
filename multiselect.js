@@ -200,9 +200,14 @@ var multiSelect = (function(selector, options) {
             else if (this.get('parentOption'))
                 ext += '-in-optgroup';
 
+            var label = this.get('label');
+
+            if (this.get('disabled'))
+                label = '<i>' + label + '</i>';
+
             return this.set('domElement', createElement('<div class="multiselect-row multiselect' + ext + '">\
                 <label>\
-                    <input type="checkbox" class="multiselect-checkbox" ' + (this.get('checked') ? 'checked' : '') + '> ' + this.get('label') + '\
+                    <input type="checkbox" class="multiselect-checkbox" ' + (this.get('disabled') ? 'disabled' : '') + ' ' + (this.get('checked') ? 'checked' : '') + '> ' + label + '\
                 </label>\
             </div>'));
         };
@@ -390,7 +395,6 @@ var multiSelect = (function(selector, options) {
             var controllerOptions = this.get('options');
 
             for (var j in controllerOptions) {
-
                 if (!controllerOptions[j].get('isOptionGroup'))
                     continue;
 
@@ -418,9 +422,8 @@ var multiSelect = (function(selector, options) {
 
             var options = this.get('options');
 
-            for (var i in options) {
+            for (var i in options)
                 retVal.push(options[i].getUi());
-            }
 
             return retVal;
         };
@@ -468,7 +471,7 @@ var multiSelect = (function(selector, options) {
         };
 
         UIController.prototype.handleCheckboxClick = function(el) {
-            console.log(el);
+
         };
 
         UIController.prototype.hideDropdown = function() {
