@@ -1,14 +1,23 @@
 .multiselect-container {
-    /*display:none;*/
+    display: none;
     position: absolute;
     background-color: #fff;
     color: #495057;
-    font-family: 'helvetica neue', helvetica;
+    font-family: 'helvetica neue', helvetica, arial;
     letter-spacing: .5px;
     font-weight: 200;
     min-width: 350px;
     width: 350px;
     box-shadow: 0 1px 3px 1px rgba(0,0,0,.2);
+}
+
+.multiselect-container.show {
+    display: block;
+}
+
+.multiselect-container .multiselect-row-container {
+    max-height: 200px;
+    overflow: scroll;
 }
 
 .multiselect-container hr {
@@ -24,6 +33,11 @@
 
 .multiselect-container .multiselect-row:first-child {
     padding-top: 10px;
+}
+
+.multiselect-container .multiselect-row label {
+    display: block;
+    width: 100%;
 }
 
 .multiselect-container .multiselect-row label i {

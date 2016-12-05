@@ -99,8 +99,8 @@ var multiSelect = (function(selector, options) {
             // Objekt
             case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
                 var retVal = that[what].hasOwnProperty('className')
-                    ? new that[what].value.constructor
-                    : {};
+                    ? (that[what].value && new that[what].value.constructor || null)
+                    : null;
 
                 for (var property in that[what].value)
                     if (that[what].value.hasOwnProperty(property))
@@ -207,7 +207,7 @@ var multiSelect = (function(selector, options) {
 
             return this.set('domElement', createElement('<div class="multiselect-row multiselect' + ext + '">\
                 <label>\
-                    <input type="checkbox" class="multiselect-checkbox" data-inst="' + this.instanceId + '" ' + (this.get('disabled') ? 'disabled' : '') + ' ' + (this.get('checked') ? 'checked' : '') + '> ' + label + '\
+                    <input type="checkbox" class="multiselect-checkbox" data-opt-inst="' + this.instanceId + '" ' + (this.get('disabled') ? 'disabled' : '') + ' ' + (this.get('checked') ? 'checked' : '') + '> ' + label + '\
                 </label>\
             </div>'));
         };
@@ -222,9 +222,13 @@ var multiSelect = (function(selector, options) {
 
                 for (i in options)
                     if (!options[i].get('disabled'))
-                        options[i].check(checked);
+                        options[i].set('checked', checked);
             } else {
                 var parent = this.get('parentOption');
+
+                if (!parent)
+                    return;
+
                 options = parent.get('options');
 
                 var allSelected = true;
@@ -271,6 +275,14 @@ var multiSelect = (function(selector, options) {
             </div>'));
         };
 
+        Dropdown.prototype.show = function() {
+            this.get('domElement').classList = 'multiselect-container show';
+        };
+
+        Dropdown.prototype.hide = function() {
+            this.get('domElement').classList = 'multiselect-container';
+        };
+
         return Dropdown;
     })();
 
@@ -296,7 +308,7 @@ var multiSelect = (function(selector, options) {
         ToggleButton.prototype.set = function(what, value) { return set(_privateVals[this.instanceId], what, value) };
 
         ToggleButton.prototype.getUi = function() {
-            return this.set('domElement', createElement('<button></button>'));
+            return this.set('domElement', createElement('<button class="multiselect-button multiselect-save multiselect-toggle"></button>'));
         };
 
         ToggleButton.prototype.setLabel = function(text) {
@@ -325,10 +337,10 @@ var multiSelect = (function(selector, options) {
 
             _privateVals[this.instanceId] = _private();
 
-            if (typeof element !== 'undefined')
+            if (typeof element !== 'undefined') {
                 this.set('domElement', element);
-
-            this.init();
+                this.init();
+            }
         };
 
         // Dynamic get/set/add
@@ -377,12 +389,8 @@ var multiSelect = (function(selector, options) {
             var toggleButton = this.get('toggleButton');
             select.insertAdjacentHTML('afterend', toggleButton.getUi().outerHTML);
 
-            select.setAttribute('style', 'display: none;');
-
             var toggleButtonDOM = select.nextElementSibling;
             toggleButton.set('domElement', toggleButtonDOM);
-
-            toggleButtonDOM.classList = 'multiselect-button multiselect-save';
 
             var dropdown = this.get('dropdown');
             toggleButtonDOM.insertAdjacentHTML('afterend', dropdown.getUi().outerHTML);
@@ -390,17 +398,22 @@ var multiSelect = (function(selector, options) {
             var dropdownDOM = toggleButtonDOM.nextElementSibling;
             dropdown.set('domElement', dropdownDOM);
 
-            dropdownDOM.setAttribute('style', 'left: ' + toggleButtonDOM.offsetLeft + 'px; top: ' + (toggleButtonDOM.offsetTop + toggleButtonDOM.offsetHeight + 8) + 'px;');
+            select.parentNode.removeChild(select);
+
+            toggleButtonDOM.setAttribute('data-inst', this.instanceId);
+            dropdownDOM.setAttribute('data-inst', this.instanceId);
 
             this.updateContent();
-            this.applyEvents();
         };
 
         UIController.prototype.updateContent = function() {
             var dropdownDOM  = this.get('dropdown').get('domElement');
+            var toggleButtonDOM  = this.get('toggleButton').get('domElement');
             var rowContainer = dropdownDOM.querySelector('.multiselect-row-container');
 
             var optList = this.getOptionList();
+
+            dropdownDOM.style = 'left: ' + toggleButtonDOM.offsetLeft + 'px; top: ' + (toggleButtonDOM.offsetTop + toggleButtonDOM.offsetHeight + 8) + 'px;';
 
             rowContainer.innerHTML = '';
 
@@ -437,9 +450,8 @@ var multiSelect = (function(selector, options) {
                         allSelected = false;
                 }
 
-                if (!allSelected && !allNotSelected) {
+                if (!allSelected && !allNotSelected)
                     controllerOptions[j].get('domElement').querySelector('input[type=checkbox]').indeterminate = true;
-                }
             }
         }
 
@@ -478,26 +490,8 @@ var multiSelect = (function(selector, options) {
             return count;
         };
 
-        UIController.prototype.applyEvents = function() {
-            var that = this;
-
-            document.addEventListener('click', function(event) {
-                var el = event.target;
-
-                if (el.tagName == 'INPUT' && el.type == 'checkbox')
-                    that.handleCheckboxClick(el);
-
-                if (!!~el.className.indexOf('multiselect-button')) {
-                    if (!!~el.className.indexOf('multiselect-cancel'))
-                        that.hideDropdown();
-                    else if (!!~el.className.indexOf('multiselect-save'))
-                        that.saveChanges();
-                }
-            });
-        };
-
         UIController.prototype.handleCheckboxClick = function(el) {
-            var instanceId = 'data-inst' in el.attributes && el.attributes['data-inst'].value || null;
+            var instanceId = 'data-opt-inst' in el.attributes && el.attributes['data-opt-inst'].value || null;
 
             // obligatorisch
             if (!instanceId) {
@@ -513,8 +507,15 @@ var multiSelect = (function(selector, options) {
             this.updateContent();
         };
 
-        UIController.prototype.hideDropdown = function() {
+        UIController.prototype.showDropdown = function() {
+            this.set('dropdownIsOpen', true);
+            this.get('dropdown').show();
+            this.updateContent();
+        };
 
+        UIController.prototype.hideDropdown = function() {
+            this.set('dropdownIsOpen', false);
+            this.get('dropdown').hide();
         };
 
         UIController.prototype.saveChanges = function() {
@@ -563,6 +564,54 @@ var multiSelect = (function(selector, options) {
             });
         };
 
+        MultiSelect.prototype.applyEvents = function() {
+            var i;
+            var that = this;
+
+            document.addEventListener('click', function(event) {
+                var uiControllers = that.get('uiControllers');
+
+                var el = event.target;
+
+                var currentElement = el;
+                var instanceId     = null;
+
+                while (currentElement && !instanceId) {
+                    instanceId = currentElement.attributes['data-inst'] && currentElement.attributes['data-inst'].value || null;
+                    currentElement = currentElement.parentElement;
+                }
+
+                for (i in uiControllers)
+                    if (uiControllers[i].get('dropdownIsOpen') && uiControllers[i].instanceId !== instanceId)
+                        uiControllers[i].hideDropdown();
+
+                if (!instanceId)
+                    return;
+
+                var ctrl = new UIController();
+
+                ctrl.instanceId = instanceId;
+
+                if (el.tagName == 'INPUT' && el.type == 'checkbox') {
+                    ctrl.handleCheckboxClick(el);
+                    return;
+                }
+
+                if (!!~el.className.indexOf('multiselect-button')) {
+                    if (!!~el.className.indexOf('multiselect-cancel'))
+                        ctrl.hideDropdown();
+                    else if (!!~el.className.indexOf('multiselect-toggle')) {
+                        if (ctrl.get('dropdownIsOpen'))
+                            ctrl.hideDropdown();
+                        else
+                            ctrl.showDropdown();
+                    } else if (!!~el.className.indexOf('multiselect-save'))
+                        ctrl.saveChanges();
+                }
+
+            });
+        };
+
         return MultiSelect;
     })();
 
@@ -575,5 +624,6 @@ var multiSelect = (function(selector, options) {
     // Warten bis der Inhalt der Seite geladen ist
     ready(function() {
         multiSelect.init(selector);
+        multiSelect.applyEvents();
     });
 });
