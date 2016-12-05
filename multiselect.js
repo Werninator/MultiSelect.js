@@ -228,21 +228,12 @@ var multiSelect = (function(selector, options) {
                 options = parent.get('options');
 
                 var allSelected = true;
-                var allNotSelected = true;
 
-                for (i in options) {
+                for (i in options)
                     if (!options[i].get('checked'))
                         allSelected = false;
 
-                    if (options[i].get('checked'))
-                        allNotSelected = false;
-                }
-
-                if (allSelected)
-                    parent.set('checked', true);
-
-                if (allNotSelected)
-                    parent.set('checked', false);
+                parent.set('checked', allSelected);
             }
         };
 
