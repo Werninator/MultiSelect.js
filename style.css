@@ -79,7 +79,6 @@
     margin-top: -5px;
 }
 
-
 .multiselect-container .multiselect-row input[type="checkbox"] {
     font-size: 1em;
 }
@@ -91,4 +90,22 @@
 .multiselect-container .multiselect-option-in-optgroup {
     padding-left: 30px;
     padding-top:0;
+}
+
+.multiselect-container .multiselect-search {
+    width: 96%;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.multiselect-container .multiselect-allselect, .multiselect-container .multiselect-searchresult-display {
+    font-size: 0.8em;
+    cursor: pointer;
+    font-weight:500;
+}
+
+.multiselect-container .multiselect-allselect {
+    color: #228ae6;
+    font-weight:500;
 }
