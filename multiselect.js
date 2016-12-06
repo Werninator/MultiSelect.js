@@ -12,15 +12,24 @@ var multiSelect = (function(selector, options) {
     var settings = {
         searchBar: false,
         useOptGroups: true,
-        ofString: 'of',
-        cancelString: 'CANCEL',
-        saveString: 'SAVE',
+        elementString: 'Elemente',
+        selectedString: 'ausgewählt',
+        ofString: 'von',
+        searchString: 'Suche...',
+        resultString: 'Suchergebnisse',
+        selectAllString: 'ALLE AUSWÄHLEN',
+        unselectAllString: 'ALLE ABWÄHLEN',
+        discardString: 'ABBRECHEN',
+        saveString: 'SPEICHERN',
 
         // Hooks
         preInit: null,
         postInit: null,
+        onDiscard: null,
         onChange: null,
         onSave: null,
+        onDropdownOpen: null,
+        onDropdownClose: null,
     };
 
     // Die übergebenen Optionen überschreiben die Standard-Settings
@@ -238,7 +247,12 @@ var multiSelect = (function(selector, options) {
                         allSelected = false;
 
                 parent.set('checked', allSelected);
+
             }
+
+            // Hook
+            if (settings.onChange)
+                settings.onChange();
         };
 
         return msOption;
@@ -269,8 +283,8 @@ var multiSelect = (function(selector, options) {
                 <div class="multiselect-row-container"></div>\
                 <div class="multiselect-row multiselect-row-bottom">\
                     <span class="multiselect-counter"></span>\
-                    <span class="multiselect-button multiselect-save">SPEICHERN</span>\
-                    <span class="multiselect-button multiselect-cancel">ABBRECHEN</span>\
+                    <span class="multiselect-button multiselect-save">' + settings.saveString + '</span>\
+                    <span class="multiselect-button multiselect-cancel">' + settings.discardString + '</span>\
                 </div>\
             </div>'));
         };
@@ -426,9 +440,9 @@ var multiSelect = (function(selector, options) {
 
             var toggleButton = this.get('toggleButton');
             var rowCounter   = dropdownDOM.querySelector('.multiselect-counter');
-            var counterText  = this.getSelectedOptionCount() + ' von ' + this.getOptionCount();
+            var counterText  = this.getSelectedOptionCount() + ' ' + settings.ofString + ' ' + this.getOptionCount();
 
-            toggleButton.setLabel(counterText + ' ausgewählt');
+            toggleButton.setLabel(counterText + ' ' + settings.selectedString);
             rowCounter.innerHTML = counterText;
 
             this.handleIndeterminate();
@@ -515,11 +529,23 @@ var multiSelect = (function(selector, options) {
             this.set('dropdownIsOpen', true);
             this.get('dropdown').show();
             this.updateContent();
+
+            // Hook
+            if (settings.onDropdownOpen)
+                settings.onDropdownOpen();
         };
 
         UIController.prototype.hideDropdown = function() {
             this.set('dropdownIsOpen', false);
             this.get('dropdown').hide();
+
+            // Hook (aber vllt verschieben weil die Discard-Logik woanders hingeht)
+            if (settings.onDiscard)
+                settings.onDiscard();
+
+            // Hook
+            if (settings.onDropdownClose)
+                settings.onDropdownClose();
         };
 
         UIController.prototype.saveChanges = function() {
@@ -572,6 +598,7 @@ var multiSelect = (function(selector, options) {
             var i;
             var that = this;
 
+            // Key Handler
             document.addEventListener('keydown', function(event) {
                 if ((event.which || event.keyCode) !== 27) // Escape
                     return
@@ -583,6 +610,7 @@ var multiSelect = (function(selector, options) {
                         uiControllers[i].hideDropdown();
             });
 
+            // Click Handler
             document.addEventListener('click', function(event) {
                 var uiControllers = that.get('uiControllers');
 
@@ -620,7 +648,6 @@ var multiSelect = (function(selector, options) {
                     } else if (!!~el.className.indexOf('multiselect-save'))
                         ctrl.saveChanges();
                 }
-
             });
         };
 
@@ -633,9 +660,17 @@ var multiSelect = (function(selector, options) {
 
     var multiSelect = new MultiSelect(settings);
 
+    // Hook
+    if (settings.preInit)
+        settings.preInit();
+
     // Warten bis der Inhalt der Seite geladen ist
     ready(function() {
         multiSelect.init(selector);
         multiSelect.applyEvents();
+
+        // Hook
+        if (settings.postInit)
+            settings.postInit();
     });
 });
