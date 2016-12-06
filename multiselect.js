@@ -50,6 +50,7 @@ var multiSelect = (function(selector, options) {
 
     // Holt sich den Typen aus Sicht der toString()-Methode der Objekte in JavaScript
     function getType(value) {
+
         return Object.prototype.toString.call(value).replace(/^\[object (.+)\]$/, '$1');
     }
 
@@ -66,22 +67,15 @@ var multiSelect = (function(selector, options) {
 
     // Erstellt eine unique-id für die Instanzen
     function uniqid() {
+
         return Math.floor(Math.random() * 1000000) + (new Date().getTime()).toString(16);
     }
 
     // Erstellt ein HTML-Element
-    function createElement(innerHTML, events) {
-        var element = document.createElement('div');
+    function createElement(innerHTML) {
+        var element       = document.createElement('div');
         element.innerHTML = innerHTML;
-
-        var child = element.children[0];
-
-        if (typeof events !== undefined)
-            for (var on in events)
-                if (events.hasOwnProperty(on))
-                    child.addEventListener(on, event);
-
-        return child;
+        return element.children[0];
     }
 
     // Triggert ein natives Event
@@ -93,6 +87,7 @@ var multiSelect = (function(selector, options) {
 
     // Wartet bis der Inhalt der Seite geladen ist bevor der Code ausgeführt wird
     function ready(fn) {
+
         document.readyState != 'loading' && fn() || document.addEventListener('DOMContentLoaded', fn);
     }
 
@@ -107,8 +102,8 @@ var multiSelect = (function(selector, options) {
         switch (true) {
             // Objekt
             case that[what].type == 'Object' && !checkType(that[what].value, 'Array'):
-                var retVal = that[what].hasOwnProperty('className')
-                    ? (that[what].value && new that[what].value.constructor || null)
+                var retVal = that[what].hasOwnProperty('className') && that[what].value
+                    ? new that[what].value.constructor
                     : null;
 
                 for (var property in that[what].value)
@@ -160,6 +155,7 @@ var multiSelect = (function(selector, options) {
             return {
                 checked: { value: false, type: 'Boolean' },
                 label: { value: '', type: 'String' },
+                value: { value: '', type: 'String' },
                 disabled: { value: false, type: 'Boolean' },
                 isOptionGroup: { value: false, type: 'Boolean' },
                 options: { value: [], type: 'Object', className: 'Option' },
@@ -195,10 +191,13 @@ var multiSelect = (function(selector, options) {
                 ? element.getAttribute('label')
                 : element.textContent);
 
+
             this.set('disabled', element.disabled)
 
-            if (!this.get('isOptionGroup'))
+            if (!this.get('isOptionGroup')) {
                 this.set('checked', element.selected);
+                this.set('value', element.value);
+            }
         };
 
         msOption.prototype.getUi = function() {
@@ -339,7 +338,8 @@ var multiSelect = (function(selector, options) {
                 options: { value: [], type: 'Object', className: 'Option' },
                 dropdown: { value: null, type: 'Object', className: 'Dropdown' },
                 toggleButton: { value: null, type: 'Object', className: 'ToggleButton' },
-                dropdownIsOpen: { value: false, type: 'Boolean' }
+                dropdownIsOpen: { value: false, type: 'Boolean' },
+                valueInput: { value: null, type: 'HTMLInputElement' }
             };
         };
 
@@ -415,6 +415,20 @@ var multiSelect = (function(selector, options) {
 
             var dropdownDOM = toggleButtonDOM.nextElementSibling;
             dropdown.set('domElement', dropdownDOM);
+
+            var value = [];
+
+            Array.prototype.forEach.call(select.querySelectorAll('[selected]'), function(selectedOption, i) {
+                if (selectedOption.value)
+                    value.push(selectedOption.value);
+            });
+
+            value = JSON.stringify(value);
+
+            toggleButtonDOM.insertAdjacentHTML('afterend', '<input type="hidden" value=\'' + value + '\' name="' + select.name + '" />');
+            var valueInputDOM = toggleButtonDOM.nextElementSibling;
+
+            this.set('valueInput', valueInputDOM);
 
             select.parentNode.removeChild(select);
 
@@ -525,6 +539,17 @@ var multiSelect = (function(selector, options) {
             this.updateContent();
         };
 
+        UIController.prototype.applyValueInput = function() {
+            var val     = JSON.parse(this.get('valueInput').value);
+            var options = this.get('options');
+
+            for (var i in options)
+                if (!options[i].get('disabled') && !options[i].get('isOptionGroup'))
+                    options[i].check(!!~val.indexOf(options[i].get('value')));
+
+            this.updateContent();
+        };
+
         UIController.prototype.showDropdown = function() {
             this.set('dropdownIsOpen', true);
             this.get('dropdown').show();
@@ -539,17 +564,35 @@ var multiSelect = (function(selector, options) {
             this.set('dropdownIsOpen', false);
             this.get('dropdown').hide();
 
-            // Hook (aber vllt verschieben weil die Discard-Logik woanders hingeht)
-            if (settings.onDiscard)
-                settings.onDiscard();
-
             // Hook
             if (settings.onDropdownClose)
                 settings.onDropdownClose();
         };
 
-        UIController.prototype.saveChanges = function() {
+        UIController.prototype.discardChanges = function() {
+            this.applyValueInput();
 
+            // Hook
+            if (settings.onDiscard)
+                settings.onDiscard();
+
+            this.hideDropdown();
+        };
+
+        UIController.prototype.saveChanges = function() {
+            var valueInput = this.get('valueInput');
+            var options = this.get('options');
+            var values = [];
+
+            for (var i in options)
+                if (options[i].get('checked') && options[i].get('value'))
+                    values.push(options[i].get('value'));
+
+            values = JSON.stringify(values);
+
+            valueInput.value = values;
+
+            this.hideDropdown();
         };
 
         return UIController;
@@ -588,7 +631,7 @@ var multiSelect = (function(selector, options) {
             if (!selects.length)
                 throw new MultiSelectException('init: No Selects could be found');
 
-            Array.prototype.forEach.call(selects, function(select, i){
+            Array.prototype.forEach.call(selects, function(select, i) {
                 var uiController = new UIController(select);
                 that.add('uiControllers', uiController);
             });
@@ -607,7 +650,7 @@ var multiSelect = (function(selector, options) {
 
                 for (i in uiControllers)
                     if (uiControllers[i].get('dropdownIsOpen'))
-                        uiControllers[i].hideDropdown();
+                        uiControllers[i].discardChanges();
             });
 
             // Click Handler
@@ -626,7 +669,7 @@ var multiSelect = (function(selector, options) {
 
                 for (i in uiControllers)
                     if (uiControllers[i].get('dropdownIsOpen') && uiControllers[i].instanceId !== instanceId)
-                        uiControllers[i].hideDropdown();
+                        uiControllers[i].discardChanges();
 
                 if (!instanceId)
                     return;
@@ -642,7 +685,7 @@ var multiSelect = (function(selector, options) {
 
                 if (!!~el.className.indexOf('multiselect-button')) {
                     if (!!~el.className.indexOf('multiselect-cancel'))
-                        ctrl.hideDropdown();
+                        ctrl.discardChanges();
                     else if (!!~el.className.indexOf('multiselect-toggle')) { 
                         ctrl[(ctrl.get('dropdownIsOpen') ? 'hide' : 'show') + 'Dropdown']();
                     } else if (!!~el.className.indexOf('multiselect-save'))
