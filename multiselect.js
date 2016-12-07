@@ -767,4 +767,4 @@ var multiSelect = (function(selector, options) {
         if (settings.postInit)
             settings.postInit();
     });
-});
+})();
