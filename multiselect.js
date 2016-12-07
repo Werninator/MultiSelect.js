@@ -638,4 +638,4 @@ var multiSelect = (function(selector, options) {
         multiSelect.init(selector);
         multiSelect.applyEvents();
     });
-});
+})();
