@@ -2,7 +2,7 @@ var multiSelect = (function(selector, options) {
     "use strict";
 
     // Gibt es keinen Selector, gibt es kein Plugin.
-    if (!checkType(selector, 'String') || !selector.trim())
+    if (!checkType(selector, 'String') || !trim(selector))
         return;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,7 +16,7 @@ var multiSelect = (function(selector, options) {
         selectedString: 'ausgewählt',
         ofString: 'von',
         searchString: 'Suche...',
-        resultString: 'Suchergebnisse',
+        resultString: 'SUCHERGEBNIS(SE)',
         selectAllString: 'ALLE AUSWÄHLEN',
         unselectAllString: 'ALLE ABWÄHLEN',
         discardString: 'ABBRECHEN',
@@ -50,7 +50,6 @@ var multiSelect = (function(selector, options) {
 
     // Holt sich den Typen aus Sicht der toString()-Methode der Objekte in JavaScript
     function getType(value) {
-
         return Object.prototype.toString.call(value).replace(/^\[object (.+)\]$/, '$1');
     }
 
@@ -67,7 +66,6 @@ var multiSelect = (function(selector, options) {
 
     // Erstellt eine unique-id für die Instanzen
     function uniqid() {
-
         return Math.floor(Math.random() * 1000000) + (new Date().getTime()).toString(16);
     }
 
@@ -87,8 +85,12 @@ var multiSelect = (function(selector, options) {
 
     // Wartet bis der Inhalt der Seite geladen ist bevor der Code ausgeführt wird
     function ready(fn) {
-
         document.readyState != 'loading' && fn() || document.addEventListener('DOMContentLoaded', fn);
+    }
+
+    // Trim Funktion
+    function trim(str) {
+        return str.replace(/^\s+|\s+$/gm, '');
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -222,7 +224,7 @@ var multiSelect = (function(selector, options) {
             }
 
             return this.set('domElement', createElement('<div class="multiselect-row multiselect' + ext + '">\
-                <label>\
+                <label class="multiselect-label">\
                     <input type="checkbox" class="multiselect-checkbox" data-opt-inst="' + this.instanceId + '" ' + (this.get('disabled') ? 'disabled' : '') + ' ' + (this.get('checked') ? 'checked' : '') + '> ' + label + '\
                 </label>\
             </div>'));
@@ -445,9 +447,9 @@ var multiSelect = (function(selector, options) {
             dropdownDOM.setAttribute('data-inst', this.instanceId);
 
             if (settings.searchBar) {
-                dropdownDOM.prepend(createElement('<div class="multiselect-row">\
+                dropdownDOM.innerHTML = '<div class="multiselect-row">\
                     <input type="text" class="multiselect-search" placeholder="' + settings.searchString + '">\
-                </div>'));
+                </div>' + dropdownDOM.innerHTML;
 
                 var searchBar = dropdownDOM.querySelector('.multiselect-search');
                 this.set('searchBar', searchBar);
@@ -510,11 +512,17 @@ var multiSelect = (function(selector, options) {
 
             var options = this.get('options');
 
-            var searchValue = settings.searchBar ? this.get('searchBar').value : false;
+            var searchValue = settings.searchBar ? trim(this.get('searchBar').value) : false;
+
 
             for (var i in options)
                 if (options[i].getUi(searchValue))
                     retVal.push(options[i].getUi(searchValue));
+
+            if (searchValue)
+                retVal.unshift(createElement('<div class="multiselect-row multiselect-searchresult-display">\
+                    ' + retVal.length + ' ' + settings.resultString + '\
+                </div>'))
 
             return retVal;
         };
@@ -576,6 +584,9 @@ var multiSelect = (function(selector, options) {
             this.get('dropdown').show();
             this.updateContent();
 
+            if (settings.searchBar)
+                this.get('searchBar').focus();
+
             // Hook
             if (settings.onDropdownOpen)
                 settings.onDropdownOpen();
@@ -592,6 +603,9 @@ var multiSelect = (function(selector, options) {
 
         UIController.prototype.discardChanges = function() {
             this.applyValueInput();
+
+            if (settings.searchBar)
+                this.get('searchBar').value = '';
 
             // Hook
             if (settings.onDiscard)
@@ -668,9 +682,6 @@ var multiSelect = (function(selector, options) {
 
                 var currentElement = el;
                 var instanceId     = null;
-
-                if (!~currentElement.className.indexOf('multiselect'))
-                    return false;
 
                 while (currentElement && !instanceId) {
                     instanceId = currentElement.attributes['data-inst'] && currentElement.attributes['data-inst'].value || null;
