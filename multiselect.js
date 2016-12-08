@@ -211,10 +211,10 @@ var multiSelect = (function(selector, options) {
                 label = '<i>' + label + '</i>';
 
             if (search) {
-                if (this.get('isOptionGroup') || !~label.indexOf(search))
+                if (this.get('isOptionGroup') || !~label.toLowerCase().indexOf(search))
                     return false;
 
-                var reg = new RegExp('(' + search + ')', 'g');
+                var reg = new RegExp('(' + search + ')', 'ig');
                 label = label.replace(reg, '<b>$1</b>');
             } else {
                 if (this.get('isOptionGroup'))
@@ -767,4 +767,4 @@ var multiSelect = (function(selector, options) {
         if (settings.postInit)
             settings.postInit();
     });
-})();
+});
