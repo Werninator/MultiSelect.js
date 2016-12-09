@@ -101,11 +101,11 @@
 
 .multiselect-container .multiselect-allselect, .multiselect-container .multiselect-searchresult-display {
     font-size: 0.8em;
-    cursor: pointer;
     font-weight:500;
 }
 
 .multiselect-container .multiselect-allselect {
+    cursor: pointer;
     color: #228ae6;
     font-weight:500;
 }

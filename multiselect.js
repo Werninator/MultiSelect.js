@@ -211,7 +211,7 @@ var multiSelect = (function(selector, options) {
                 label = '<i>' + label + '</i>';
 
             if (search) {
-                if (this.get('isOptionGroup') || !~label.toLowerCase().indexOf(search))
+                if (this.get('isOptionGroup') || !~label.toLowerCase().indexOf(search.toLowerCase()))
                     return false;
 
                 var reg = new RegExp('(' + search + ')', 'ig');
@@ -350,7 +350,8 @@ var multiSelect = (function(selector, options) {
                 toggleButton: { value: null, type: 'Object', className: 'ToggleButton' },
                 dropdownIsOpen: { value: false, type: 'Boolean' },
                 valueInput: { value: null, type: 'HTMLInputElement' },
-                searchBar: { value: null, type: 'HTMLInputElement' }
+                searchBar: { value: null, type: 'HTMLInputElement' },
+                allSelected: { value: false, type: 'Boolean' }
             };
         };
 
@@ -459,6 +460,8 @@ var multiSelect = (function(selector, options) {
         };
 
         UIController.prototype.updateContent = function() {
+            this.checkAllSelect();
+
             var dropdownDOM  = this.get('dropdown').get('domElement');
             var toggleButtonDOM  = this.get('toggleButton').get('domElement');
             var rowContainer = dropdownDOM.querySelector('.multiselect-row-container');
@@ -480,6 +483,24 @@ var multiSelect = (function(selector, options) {
             rowCounter.innerHTML = counterText;
 
             this.handleIndeterminate();
+        };
+
+        UIController.prototype.checkAllSelect = function() {
+            var options = this.get('options');
+
+            var allSelected = true;
+
+            for (var i in options) {
+                if (options[i].get('disabled')
+                 || options[i].get('isOptionGroup')
+                 || options[i].get('checked')
+                 || (settings.searchBar && !~options[i].get('label').toLowerCase().indexOf(trim(this.get('searchBar').value.toLowerCase()))))
+                    continue;
+
+                allSelected = false;
+            }
+
+            this.set('allSelected', allSelected);
         };
 
         UIController.prototype.handleIndeterminate = function() {
@@ -507,13 +528,31 @@ var multiSelect = (function(selector, options) {
             }
         }
 
+        UIController.prototype.handleSelectAllClick = function() {
+            var selected = this.set('allSelected', !this.get('allSelected'));
+
+            var options = this.get('options');
+
+            for (var i in options) {
+                if (options[i].get('disabled') || options[i].get('isOptionGroup') || (settings.searchBar && !~options[i].get('label').toLowerCase().indexOf(trim(this.get('searchBar').value.toLowerCase()))))
+                    continue;
+
+                options[i].check(selected);
+            }
+
+            this.updateContent();
+        };
+
         UIController.prototype.getOptionList = function() {
             var retVal  = [];
 
             var options = this.get('options');
 
-            var searchValue = settings.searchBar ? trim(this.get('searchBar').value) : false;
+            retVal.unshift(createElement('<div class="multiselect-row multiselect-allselect">\
+                ' + (this.get('allSelected') ? settings.unselectAllString : settings.selectAllString) + '\
+            </div>'));
 
+            var searchValue = settings.searchBar ? trim(this.get('searchBar').value) : false;
 
             for (var i in options)
                 if (options[i].getUi(searchValue))
@@ -521,7 +560,7 @@ var multiSelect = (function(selector, options) {
 
             if (searchValue)
                 retVal.unshift(createElement('<div class="multiselect-row multiselect-searchresult-display">\
-                    ' + retVal.length + ' ' + settings.resultString + '\
+                    ' + (retVal.length - 1) + ' ' + settings.resultString + '\
                 </div>'))
 
             return retVal;
@@ -582,6 +621,7 @@ var multiSelect = (function(selector, options) {
         UIController.prototype.showDropdown = function() {
             this.set('dropdownIsOpen', true);
             this.get('dropdown').show();
+            this.get('searchBar').value = '';
             this.updateContent();
 
             if (settings.searchBar)
@@ -731,6 +771,11 @@ var multiSelect = (function(selector, options) {
 
                 if (el.tagName == 'INPUT' && el.type == 'checkbox') {
                     ctrl.handleCheckboxClick(el);
+                    return;
+                }
+
+                if (!!~el.className.indexOf('multiselect-allselect')) {
+                    ctrl.handleSelectAllClick();
                     return;
                 }
 
