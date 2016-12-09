@@ -7,17 +7,6 @@
     <link rel="stylesheet" href="style.css">
 
     <script src="multiselect.js"></script>
-
-    <script>
-        multiSelect('.multiple-select', {
-            debugMode: true,
-            ofString: 'von',
-            saveString: 'SPEICHERN',
-            cancelString: 'ABBRECHEN',
-            preInit: (function() {}),
-            afterInit: (function() {})
-        });
-    </script>
 </head>
 <body>
     <select name="select" class="multiple-select" multiple style="height: 100px">
@@ -34,7 +23,21 @@
     <!-- <div class="multiple-select"></div> -->
     <br>
 
-    <div class="multiselect-container">
+    <div class="multiselect-container" style="display: block">
+        <div class="multiselect-row">
+            <input type="text" class="multiselect-search">
+        </div>
+        <div class="multiselect-row multiselect-allselect">
+            ALLE AUSWÄHLEN
+        </div>
+        <div class="multiselect-row multiselect-searchresult-display">
+            10 SUCHERGEBNISSE
+        </div>
+        <div class="multiselect-row multiselect-option">
+            <label>
+                <input type="checkbox" class="multiselect-checkbox"> test
+            </label>
+        </div>
         <div class="multiselect-row multiselect-optgroup">
             <label>
                 <input type="checkbox" class="multiselect-checkbox"> Europa
