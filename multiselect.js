@@ -528,9 +528,8 @@ var multiSelect = (function(selector, options) {
             }
         }
 
-        UIController.prototype.handleSelectAllClick = function() {
+        UIController.prototype.handleCheckAllClick = function() {
             var selected = this.set('allSelected', !this.get('allSelected'));
-
             var options = this.get('options');
 
             for (var i in options) {
@@ -539,6 +538,9 @@ var multiSelect = (function(selector, options) {
 
                 options[i].check(selected);
             }
+
+            if (settings.onChange)
+                settings.onChange();
 
             this.updateContent();
         };
@@ -621,7 +623,10 @@ var multiSelect = (function(selector, options) {
         UIController.prototype.showDropdown = function() {
             this.set('dropdownIsOpen', true);
             this.get('dropdown').show();
-            this.get('searchBar').value = '';
+
+            if (settings.searchBar)
+                this.get('searchBar').value = '';
+
             this.updateContent();
 
             if (settings.searchBar)
@@ -666,6 +671,9 @@ var multiSelect = (function(selector, options) {
             values = JSON.stringify(values);
 
             valueInput.value = values;
+
+            if (settings.onSave)
+                settings.onSave();
 
             this.hideDropdown();
         };
@@ -775,7 +783,7 @@ var multiSelect = (function(selector, options) {
                 }
 
                 if (!!~el.className.indexOf('multiselect-allselect')) {
-                    ctrl.handleSelectAllClick();
+                    ctrl.handleCheckAllClick();
                     return;
                 }
 
