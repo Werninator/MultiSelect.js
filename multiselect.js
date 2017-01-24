@@ -672,6 +672,8 @@ var multiSelect = (function(selector, options) {
 
             valueInput.value = values;
 
+            triggerEvent(valueInput, 'change');
+
             if (settings.onSave)
                 settings.onSave();
 
